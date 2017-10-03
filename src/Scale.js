@@ -5,7 +5,7 @@ class Scale extends Component {
     super(props);
 
     this.USB_FILTERS = [
-      { vendorId: 0x0922, productId: 0x8003 }, // 10lb scale
+      { vendorId: 2338, productId: 32777 }, // 10lb scale
       { vendorId: 0x0922, productId: 0x8004 } // 25lb scale
     ];
 
@@ -21,6 +21,7 @@ class Scale extends Component {
       scaleState: "",
       errorMsg: null
     };
+
 
     if (navigator.usb) {
       navigator.usb.getDevices({ filters: this.USB_FILTERS }).then(devices => {
@@ -55,6 +56,7 @@ class Scale extends Component {
     this.bindDevice = this.bindDevice.bind(this);
     this.disconnect = this.disconnect.bind(this);
   }
+
 
   getWeight() {
     this.setState({ shouldRead: true });
@@ -100,27 +102,27 @@ class Scale extends Component {
     this.setState({ shouldRead: false });
   }
 
-  bindDevice(device) {
-    device
-      .open()
-      .then(() => {
-        console.log(
-          `Connected ${device.productName} ${device.manufacturerName}`,
-          device
-        );
-        this.setState({ connected: true, device: device });
+  	bindDevice(device) {
+	    device
+	      .open()
+	      .then(() => {
+	        console.log(
+	          `Connected ${device.productName} ${device.manufacturerName}`,
+	          device
+	        );
+	        this.setState({ connected: true, device: device });
 
-        if (device.configuration === null) {
-          return device.selectConfiguration(1);
-        }
-      })
-      .then(() => device.claimInterface(0))
-      .then(() => this.getWeight())
-      .catch(err => {
-        console.error("USB Error", err);
-        this.setState({ errorMsg: err.message });
-      });
-  }
+	        if (device.configuration === null) {
+	          return device.selectConfiguration(1);
+	        }
+	      })
+	      .then(() => device.claimInterface(0))
+	      .then(() => this.getWeight())
+	      .catch(err => {
+	        console.error("USB Error", err);
+	        this.setState({ errorMsg: err.message });
+	    });
+  	}
 
   disconnect() {
     this.setState({
