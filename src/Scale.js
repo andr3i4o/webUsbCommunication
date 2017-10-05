@@ -5,8 +5,7 @@ class Scale extends Component {
     super(props);
 
     this.USB_FILTERS = [
-      { vendorId: 2338, productId: 32777 }, // 10lb scale
-      { vendorId: 0x0922, productId: 0x8004 } // 25lb scale
+      { vendorId: 2338, productId: 32777 } // 100lb scale
     ];
 
     this.UNIT_MODES = { 2: "g", 11: "oz" };
@@ -61,41 +60,43 @@ class Scale extends Component {
   getWeight() {
     this.setState({ shouldRead: true });
     const { device } = this.state;
-    const { endpointNumber, packetSize } = device.configuration.interfaces[
-      0
-    ].alternate.endpoints[0];
-    let readLoop = () => {
-      device
-        .transferIn(endpointNumber, packetSize)
-        .then(result => {
-          let data = new Uint8Array(result.data.buffer);
+    
+    if(device.configuration.interfaces[0].alternate != null){
+      const { endpointNumber, packetSize } = device.configuration.interfaces[0].alternate.endpoints[0];  
 
-          let weight = data[4] + 256 * data[5];
+      let readLoop = () => {
+        device
+          .transferIn(endpointNumber, packetSize)
+          .then(result => {
+            let data = new Uint8Array(result.data.buffer);
 
-          const unit = this.UNIT_MODES[data[2]];
+            let weight = data[4] + 256 * data[5];
 
-          if (unit === "oz") {
-            // Use Math.pow to avoid floating point math.
-            weight /= Math.pow(10, 1);
-          }
+            const unit = this.UNIT_MODES[data[2]];
 
-          const scaleState = this.SCALE_STATES[data[1]];
+            if (unit === "oz") {
+              // Use Math.pow to avoid floating point math.
+              weight /= Math.pow(10, 1);
+            }
 
-          this.setState({
-            weight: weight,
-            unit: unit,
-            scaleState: scaleState
+            const scaleState = this.SCALE_STATES[data[1]];
+
+            this.setState({
+              weight: weight,
+              unit: unit,
+              scaleState: scaleState
+            });
+
+            if (this.state.shouldRead) {
+              readLoop();
+            }
+          })
+          .catch(err => {
+            console.error("USB Read Error", err);
           });
-
-          if (this.state.shouldRead) {
-            readLoop();
-          }
-        })
-        .catch(err => {
-          console.error("USB Read Error", err);
-        });
-    };
-    readLoop();
+      };
+      readLoop();
+    }
   }
 
   stopWeight() {
@@ -106,10 +107,7 @@ class Scale extends Component {
 	    device
 	      .open()
 	      .then(() => {
-	        console.log(
-	          `Connected ${device.productName} ${device.manufacturerName}`,
-	          device
-	        );
+	        console.log(`Connected ${device.productName} ${device.manufacturerName}`);
 	        this.setState({ connected: true, device: device });
 
 	        if (device.configuration === null) {

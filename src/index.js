@@ -5,9 +5,9 @@ import Barcode from './Barcode';
 import './index.css';
 
 ReactDOM.render(
-  <div>
-  	<Scale />
-  	<Barcode />
-  </div>,
+	<div>
+		<Scale />
+		<Barcode />
+	</div>,
   document.getElementById('root')
 );
